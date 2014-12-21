@@ -20,14 +20,15 @@ GmailSendLater will automatically delete these labels after the drafts have been
 Features:
 * The time at which a draft should be sent is specified via a label, so the formatting of the draft is not affected by GmailSendLater.
 * You can easily send a bunch of drafts at a specific time, by labeling them all at once.
-* Threading with drafts is preserved in many cases, just as if you hit the "send" button yourself.
+* Threading with drafts is preserved, just as if you hit the "send" button yourself.
 * You can verify that GmailSendLater understands when you want a draft to be sent (see *Technical Details*).
 
 Known limitations:
-* Only one draft per thread can be sent via GmailSendLater (since labels are per-thread, not per-message)
+* If there are multiple drafts per thread, they will all be sent at the same time via GmailSendLater (since labels are per-thread, not per-message).
 
-TODO: investigate more, and open as an issue on github?
-* Drafts that are part of a thread, once sent, remain as a draft in the Gmail Android app. The sent email
+TODO
+
+* none currently
 
 ## Technical Details
 

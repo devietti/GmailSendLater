@@ -1,5 +1,6 @@
 // DOCS
 // https://developers.google.com/apps-script/reference/gmail/
+// https://developers.google.com/gmail/api/v1/reference/users/drafts
 // http://sugarjs.com/api/
 
 // GLOBAL CONSTANTS
@@ -35,7 +36,7 @@ function persistLog_(msg) {
   if ( msg == "" ) { return; }
   
   var scriptProps = PropertiesService.getScriptProperties();
-  var oldlog = scriptProps.getProperty(LOG_KEY); // TODO: deprecated API
+  var oldlog = scriptProps.getProperty(LOG_KEY);
   if ( oldlog == null ) {
     oldlog = "";
   }
@@ -72,15 +73,18 @@ function sendLater(messages) {
   
   function isSendAt(lab) { return lab.getName().toLowerCase().startsWith(SEND_AT); };
   var sendat = messages.filter( function(d){
-    return d.getThread().getLabels().some(isSendAt); // TODO: .count(isSentAt) == 1;
+    return d.getThread().getLabels().some(isSendAt);
   });
-  sendat.forEach( function(d){
-    var sendatL = d.getThread().getLabels().find(isSendAt);
+  // Translate labels at thread granularity. If there are multiple drafts per thread,
+  // then the 2nd message in the thread won't have the "send at" label as it was translated earlier.
+  var sendatThreads = sendat.map( function(d){return d.getThread()} );
+  sendatThreads.forEach( function(dt){
+    var sendatL = dt.getLabels().find(isSendAt);
     var timestring = sendatL.getName().from(SEND_AT.length);
     var sendtime = Date.create( timestring );
     
     if ( !sendtime.isValid() ) { // time could not be parsed
-      d.getThread().addLabel(GmailApp.getUserLabelByName(ERROR_LABEL));
+      dt.addLabel(GmailApp.getUserLabelByName(ERROR_LABEL));
       Logger.log( "ERROR: couldn't parse send at time: "+sendatL.getName().from(SEND_AT.length) );
       
     } else { // time was parsed
@@ -99,8 +103,8 @@ function sendLater(messages) {
       
       Logger.log("parsed [" + sendatL.getName() + "] into [" + sending + "]");
       GmailApp.createLabel(sending);
-      d.getThread().addLabel( GmailApp.getUserLabelByName(sending) );
-      d.getThread().removeLabel(sendatL);
+      dt.addLabel( GmailApp.getUserLabelByName(sending) );
+      dt.removeLabel(sendatL);
     }
   });
   
@@ -127,10 +131,14 @@ function sendLater(messages) {
         Logger.log("WARNING: email should have been sent at " + sendtime + " but is being sent at " + Date.create().format(Date.RFC1123));
       }
       if ( !TESTING_MODE ) {
-        var thread = d.getThread();
+        var dt = d.getThread();
         sendDraft(d);
-        // NB: the reference to d is not totally valid anymore if sendDraft() completed
-        thread.removeLabel(sendingL);
+        
+        // only remove sending label if there are no more drafts to send from this thread
+        dt.refresh();
+        if ( dt.getMessages().none(function(m){return m.isDraft()}) ) {
+          dt.removeLabel(sendingL);
+        }
       }
     }
   });
