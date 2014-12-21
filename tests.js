@@ -1,3 +1,7 @@
+// To run the tests, go to the "Publish" menu and click "Deploy as web app..."
+// and then click the link for "Test web app for your latest code." This will
+// run the tests and display the results as a fancy HTML page.
+
 function doGet( e ) {
   QUnit.helpers( this );
   console = Logger;
