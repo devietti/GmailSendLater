@@ -34,7 +34,7 @@ function onInstall() {
 function persistLog_(msg) {
   if ( msg == "" ) { return; }
   
-  var oldlog = ScriptProperties.getProperty(LOG_KEY);
+  var oldlog = ScriptProperties.getProperty(LOG_KEY); // TODO: deprecated API
   if ( oldlog == null ) {
     oldlog = "";
   }
@@ -47,6 +47,9 @@ function clearLog() {
   ScriptProperties.deleteProperty(LOG_KEY);
 };
 
+/** Used to easily disable the send later trigger during testing */
+function nopTrigger() {}
+
 function sendLaterTrigger() {
   Logger.log("Setting user locale to '" + Session.getActiveUserLocale() + "'");
   try {
@@ -55,16 +58,20 @@ function sendLaterTrigger() {
     Logger.log("WARNING: could not set locale to '" + Session.getActiveUserLocale() + "'");
   }
   
-  sendLater( GmailApp.getDraftMessages() );
+  try {
+    sendLater( GmailApp.getDraftMessages() );
+  } catch(ex) { 
+    Logger.log(ex);
+  }
 };
 
 function sendLater(messages) {
     
   // CHECK FOR DRAFTS TO SEND
   
-  function isSendAt(lab) { return lab.getName().startsWith(SEND_AT); };
+  function isSendAt(lab) { return lab.getName().toLowerCase().startsWith(SEND_AT); };
   var sendat = messages.filter( function(d){
-    return d.getThread().getLabels().some(isSendAt);
+    return d.getThread().getLabels().some(isSendAt); // TODO: .count(isSentAt) == 1;
   });
   sendat.forEach( function(d){
     var sendatL = d.getThread().getLabels().find(isSendAt);
@@ -119,17 +126,19 @@ function sendLater(messages) {
         Logger.log("WARNING: email should have been sent at " + sendtime + " but is being sent at " + Date.create().format(Date.RFC1123));
       }
       if ( !TESTING_MODE ) {
+        var thread = d.getThread();
         sendDraft(d);
-        d.getThread().removeLabel(sendingL);
+        // NB: the reference to d is not totally valid anymore if sendDraft() completed
+        thread.removeLabel(sendingL);
       }
-      Logger.log("sending draft " + d.getPlainBody());
     }
   });
   
   // CLEANUP UNUSED LABELS
   
   var toDelete = GmailApp.getUserLabels().filter( function(lab){
-    return (lab.getName().startsWith(SEND_AT) || lab.getName().startsWith(SENDING)) && lab.getThreads().length == 0;
+    return (lab.getName().toLowerCase().startsWith(SEND_AT) || lab.getName().startsWith(SENDING)) && 
+      lab.getThreads().length == 0;
   });
   toDelete.forEach( function(lab){
     Logger.log("deleting label: " + lab.getName());
@@ -152,7 +161,80 @@ function getDST_(msg) {
   return m[1].endsWith("DT");
 };
 
+/** returns the "draft id" of the given GmailMessage draft */
+function getDraftId(d) {
+  var params = { method:"get",
+                 headers: {"Authorization": "Bearer " + ScriptApp.getOAuthToken()},
+                 muteHttpExceptions:true,
+               };
+  var resp = UrlFetchApp.fetch("https://www.googleapis.com/gmail/v1/users/me/drafts", params);
+  //Logger.log(resp.getContentText());
+  var drafts = JSON.parse(resp.getContentText()).drafts;
+  //Logger.log(drafts);
+  
+  for (var i = 0; i < drafts.length; i++) {
+    if ( drafts[i].message.id === d.getId() ) {
+      Logger.log("Found message. MessageId=" + d.getId() + " DraftId=" + drafts[i].id);
+      return drafts[i].id;
+    }
+  }
+  
+  throw ("No draft found with message id " + d.getId());
+}
+
+/** Sends the draft GmailMessage d */
 function sendDraft(d) {
+  var params = {method:"post",
+                contentType: "application/json",
+                headers: {"Authorization": "Bearer " + ScriptApp.getOAuthToken()},
+                muteHttpExceptions:true,
+                payload:JSON.stringify({ "id":getDraftId(d) })
+               };
+
+  Logger.log( "trying to send draft: " + JSON.stringify(params) );
+  
+  var resp = UrlFetchApp.fetch("https://www.googleapis.com/gmail/v1/users/me/drafts/send", params);
+  Logger.log(resp.getContentText());
+  
+  if (resp.getResponseCode() != 200) {
+    throw resp;
+  }
+}
+
+/** Helper function to cleanup all the trashed drafts left by the old sendDraft() method */
+function __cleanupOldDrafts() {
+  var params = { method:"get",
+                 headers: {"Authorization": "Bearer " + ScriptApp.getOAuthToken()},
+                 muteHttpExceptions:true,
+               };
+  var resp = UrlFetchApp.fetch("https://www.googleapis.com/gmail/v1/users/me/drafts", params);
+  if (resp.getResponseCode() != 200) {
+    throw resp.getContentText();
+  }
+  var drafts = JSON.parse(resp.getContentText()).drafts;
+  //Logger.log(drafts);
+
+  params = { method:"delete",
+            headers: {"Authorization": "Bearer " + ScriptApp.getOAuthToken()},
+            muteHttpExceptions:true,
+           };
+  for (var i = 0; i < drafts.length; i++) {
+    resp = UrlFetchApp.fetch("https://www.googleapis.com/gmail/v1/users/me/drafts/"+drafts[i].id, params);
+    //Logger.log("response code=" + resp.getResponseCode());
+    //Logger.log(resp.getAllHeaders());
+    if (resp.getResponseCode() != 204) {
+      Logger.log(resp.getContentText());
+      throw resp.getContentText();
+    }
+    Logger.log("deleted draft " + drafts[i].id);
+  }
+}
+
+
+/** Sends the draft GmailMessage d. 
+DEPRECATED: due to issues with draft persisting on the Gmail Android app.
+Sending via the Gmail API works better. */
+function __sendDraft(d) {
   // find appropriate alias from which to send
   var from = GmailApp.getAliases().find( function(alias){return d.getFrom().has(alias);} );
   
@@ -198,11 +280,13 @@ function sendDraft(d) {
   }
   
   // discards the original draft
+  // NB: the draft is still visible in the thread on the Gmail Android app :-/
   d.moveToTrash();
   
 };
 
-/** Take a list of emails and return just the addresses as a sorted, comma-delimited list. */
+/** Take a list of emails and return just the addresses as a sorted, comma-delimited list.
+DEPRECATED */
 function canonicalizeEmailList_(s) {
   var parts = s.split(",").map( function(p){
     // extract the address from addresses of the form "First Last <first@example.com>"
