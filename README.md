@@ -3,7 +3,19 @@ Script](http://code.google.com/googleapps/appsscript/) that lets you send a Gmai
 
 ## Installation
 
-TODO
+GmailSendLater is installable via copy-and-paste: you copy the source code into a "Google Apps Script" program associated with your account.
+
+1. Follow the directions at https://developers.google.com/apps-script/guides/standalone to setup Google Apps Script for your account.
+
+2. Create script for a "Blank Project"
+
+3. Copy and paste the source code for **SendLater.js** into the file **Code.gs**, and the code from **Sugar.js** into a new script file **Sugar.gs**. The names of the .gs files don't actually matter. Don't worry about **tests.js** unless you want to run the unit tests.
+
+4. Next setup the script to run periodically in the background. From the **Run** menu, click **onInstall** to run the installation code. This will prompt you to grant the permissions that GmailSendLater needs. For an explanation of the relevant permissions, see **Required Permissions** below.
+
+5. Next you'll enable access to the Gmail API. From the **Resources** menu, click **Advanced Google services...** and then at the bottom of the dialog box the link for the **Google Developers Console**, find the **Gmail API** entry and turn it **On**.
+
+6. Now, send yourself a test email via the **Usage** instructions below. By default GmailDelaySend sends emails every 15 minutes. To cause emails to be sent sooner, you can manually trigger sending via the **Run** menu by selecting the **sendLaterTrigger** entry.
 
 ## Usage
 
@@ -26,24 +38,17 @@ Features:
 Known limitations:
 * If there are multiple drafts per thread, they will all be sent at the same time via GmailSendLater (since labels are per-thread, not per-message).
 
-TODO
+## Required Permissions
 
-* none currently
+GmailSendLater requires several permissions to run. These should not be granted lightly - this is your email account after all! Here's an explanation of what each permission is needed for.
 
-## Technical Details
+* View and manage your mail: used to find the drafts to send and to manipulate their labels
 
-TODO: move to blog post
+* View and manage data associated with the application: used to log the script's execution for debugging purposes
 
-GmailSendLater runs, by default, every 15 minutes. Thus, drafts will generally be sent within 15 minutes of the precise sending time you specify.
+* Allow this application to run when you are not present: allows emails to be sent at any time, whether you are logged in or not
 
-Sending a draft is a 3-step process:
-1. You label the draft with a label like "send at 2pm"
-2. GmailSendLater runs, and replaces your label with a new label like *GmailSendLater/sending_at Thursday, February 13, 2014 2:00:00 PM GMT-0900*. This allows you to *verify* that GmailSendLater understands when to send the draft. If you remove this *GmailSendLater/sending_at* label, the draft will not be sent.
-3. GmailSendLater sends any drafts that should be sent at the current time.
-
-GmailSendLater keeps a log as a [Script Property](https://developers.google.com/apps-script/guides/properties). You can examine the log in the Google Apps Script editor via: the *File* menu: File->Project properties->"Project properties" tab->*log* property.
-
-GmailSendLater interprets the sending time using the timezone of the draft email, as the script isn't necessarily running in the same timezone as the user. You can always specify a 
+* Connect to an external service: needed to actually send the emails, which occurs via the [Gmail API](https://developers.google.com/gmail/api/v1/reference/users/drafts). Google Apps Script does not currently offer a clean way to send a draft (instead, the draft must be copied and the copy is sent) which results in issues with message threading, or a any way to discard drafts which results in drafts remaining in the message thread after sending. Thus, using this "external" web service is required.
 
 ## Shout-outs
 
@@ -51,4 +56,4 @@ I was inspired to write this by the [Gmail Delay Send script](https://code.googl
 
 GmailSendLater uses the excellent [SugarJS library](http://sugarjs.com) from Andrew Plummer, which makes the code a lot cleaner.
 
-GmailSendLater uses the Google Apps Script version of [QUnit](http://qunitjs.com/)
+GmailSendLater uses the Google Apps Script version of [QUnit](http://qunitjs.com/) for testing.
