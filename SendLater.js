@@ -1,3 +1,5 @@
+// version 1.0
+
 // DOCS
 // https://developers.google.com/apps-script/reference/gmail/
 // https://developers.google.com/gmail/api/v1/reference/users/drafts
