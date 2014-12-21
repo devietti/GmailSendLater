@@ -185,6 +185,9 @@ function getDraftId(d) {
                  muteHttpExceptions:true,
                };
   var resp = UrlFetchApp.fetch("https://www.googleapis.com/gmail/v1/users/me/drafts", params);
+  if (resp.getResponseCode() != 200) {
+    throw resp;
+  }
   //Logger.log(resp.getContentText());
   var drafts = JSON.parse(resp.getContentText()).drafts;
   
