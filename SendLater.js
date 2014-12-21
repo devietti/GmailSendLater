@@ -34,17 +34,18 @@ function onInstall() {
 function persistLog_(msg) {
   if ( msg == "" ) { return; }
   
-  var oldlog = ScriptProperties.getProperty(LOG_KEY); // TODO: deprecated API
+  var scriptProps = PropertiesService.getScriptProperties();
+  var oldlog = scriptProps.getProperty(LOG_KEY); // TODO: deprecated API
   if ( oldlog == null ) {
     oldlog = "";
   }
   
   var newlog = (JSON.stringify(msg) + oldlog).first(LOG_SIZE);
-  ScriptProperties.setProperty(LOG_KEY, newlog);
+  scriptProps.setProperty(LOG_KEY, newlog);
 };
 
 function clearLog() {
-  ScriptProperties.deleteProperty(LOG_KEY);
+  PropertiesService.getScriptProperties().deleteProperty(LOG_KEY);
 };
 
 /** Used to easily disable the send later trigger during testing */
@@ -170,7 +171,6 @@ function getDraftId(d) {
   var resp = UrlFetchApp.fetch("https://www.googleapis.com/gmail/v1/users/me/drafts", params);
   //Logger.log(resp.getContentText());
   var drafts = JSON.parse(resp.getContentText()).drafts;
-  //Logger.log(drafts);
   
   for (var i = 0; i < drafts.length; i++) {
     if ( drafts[i].message.id === d.getId() ) {
@@ -200,99 +200,3 @@ function sendDraft(d) {
     throw resp;
   }
 }
-
-/** Helper function to cleanup all the trashed drafts left by the old sendDraft() method */
-function __cleanupOldDrafts() {
-  var params = { method:"get",
-                 headers: {"Authorization": "Bearer " + ScriptApp.getOAuthToken()},
-                 muteHttpExceptions:true,
-               };
-  var resp = UrlFetchApp.fetch("https://www.googleapis.com/gmail/v1/users/me/drafts", params);
-  if (resp.getResponseCode() != 200) {
-    throw resp.getContentText();
-  }
-  var drafts = JSON.parse(resp.getContentText()).drafts;
-  //Logger.log(drafts);
-
-  params = { method:"delete",
-            headers: {"Authorization": "Bearer " + ScriptApp.getOAuthToken()},
-            muteHttpExceptions:true,
-           };
-  for (var i = 0; i < drafts.length; i++) {
-    resp = UrlFetchApp.fetch("https://www.googleapis.com/gmail/v1/users/me/drafts/"+drafts[i].id, params);
-    //Logger.log("response code=" + resp.getResponseCode());
-    //Logger.log(resp.getAllHeaders());
-    if (resp.getResponseCode() != 204) {
-      Logger.log(resp.getContentText());
-      throw resp.getContentText();
-    }
-    Logger.log("deleted draft " + drafts[i].id);
-  }
-}
-
-
-/** Sends the draft GmailMessage d. 
-DEPRECATED: due to issues with draft persisting on the Gmail Android app.
-Sending via the Gmail API works better. */
-function __sendDraft(d) {
-  // find appropriate alias from which to send
-  var from = GmailApp.getAliases().find( function(alias){return d.getFrom().has(alias);} );
-  
-  var opts = {
-    "attachments":d.getAttachments(),
-    "bcc"      :d.getBcc(),
-    "cc"       :d.getCc(),
-    "htmlBody" :d.getBody(),
-    "replyTo"  :d.getReplyTo(),
-    "noReply"  :false,
-    "subject"  :d.getSubject() // used by GmailThread.replay() and .forward()
-  };
-  if ( from != null ) {
-    opts["from"] = from;
-  }
-  
-  // send the message
-  
-  if ( d.getThread().getMessageCount() == 1 ) {
-    // message not part of a thread
-    Logger.log("sendEmail()");
-    GmailApp.sendEmail(d.getTo(), d.getSubject(), d.getPlainBody(), opts);
-    
-  } else {
-    // message is part of a thread, try to maintain threading
-    
-    // look for a message we can reply to: msg's from-addr == our to-addr
-    var msgs = d.getThread().getMessages().filter(function(msg){
-      return !msg.isDraft() && msg.getId() != d.getId() &&
-        canonicalizeEmailList_(msg.getFrom()) == canonicalizeEmailList_(d.getTo());
-    });
-    if (msgs.length > 0) {
-      // NB: reply() doesn't support changes in recipients
-      Logger.log("reply()");
-      msgs.last().reply(d.getPlainBody(), opts);
-      
-    } else {
-      // we didn't find a message to reply() to, so forward() the draft
-      // NB: forward() breaks threading if we *don't* change the recipients :-/
-      Logger.log("forward()");
-      d.forward(d.getTo(), opts);
-    }
-  }
-  
-  // discards the original draft
-  // NB: the draft is still visible in the thread on the Gmail Android app :-/
-  d.moveToTrash();
-  
-};
-
-/** Take a list of emails and return just the addresses as a sorted, comma-delimited list.
-DEPRECATED */
-function canonicalizeEmailList_(s) {
-  var parts = s.split(",").map( function(p){
-    // extract the address from addresses of the form "First Last <first@example.com>"
-    var m = /<(.*)>/.exec(p);
-    return (m == null) ? p : m[1] ;
-  } );  
-  parts.sort();
-  return parts.join(",");
-};
