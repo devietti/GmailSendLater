@@ -71,20 +71,29 @@ function sendLater(messages) {
     
   // CHECK FOR DRAFTS TO SEND
   
+  // translate labels from "send at ..." to "sendint_at ..."
+  
   function isSendAt(lab) { return lab.getName().toLowerCase().startsWith(SEND_AT); };
+  function isSending(lab) { return lab.getName().startsWith(SENDING); };  
   var sendat = messages.filter( function(d){
     return d.getThread().getLabels().some(isSendAt);
   });
-  // Translate labels at thread granularity. If there are multiple drafts per thread,
-  // then the 2nd message in the thread won't have the "send at" label as it was translated earlier.
-  var sendatThreads = sendat.map( function(d){return d.getThread()} );
-  sendatThreads.forEach( function(dt){
-    var sendatL = dt.getLabels().find(isSendAt);
+  sendat.forEach( function(d){
+    var sendatL = d.getThread().getLabels().find(isSendAt);
+    
+    // If there are multiple drafts per thread, then this label was already translated due to another draft.
+    if (sendatL === undefined) {
+      if (d.getThread().getLabels().find(isSending) === undefined) {
+        Logger.log("Couldn't find expected sending_at label for " + d.getThread().getLabels());
+      }
+      return;
+    }
+    
     var timestring = sendatL.getName().from(SEND_AT.length);
     var sendtime = Date.create( timestring );
     
     if ( !sendtime.isValid() ) { // time could not be parsed
-      dt.addLabel(GmailApp.getUserLabelByName(ERROR_LABEL));
+      d.getThread().addLabel(GmailApp.getUserLabelByName(ERROR_LABEL));
       Logger.log( "ERROR: couldn't parse send at time: "+sendatL.getName().from(SEND_AT.length) );
       
     } else { // time was parsed
@@ -103,14 +112,13 @@ function sendLater(messages) {
       
       Logger.log("parsed [" + sendatL.getName() + "] into [" + sending + "]");
       GmailApp.createLabel(sending);
-      dt.addLabel( GmailApp.getUserLabelByName(sending) );
-      dt.removeLabel(sendatL);
+      d.getThread().addLabel( GmailApp.getUserLabelByName(sending) );
+      d.getThread().removeLabel(sendatL);
     }
   });
   
   // SEND ANY DRAFTS THAT ARE READY
   
-  function isSending(lab) { return lab.getName().startsWith(SENDING); };
   var tosend = messages.filter( function(d){
     return d.getThread().getLabels().some(isSending);
   });
@@ -136,7 +144,7 @@ function sendLater(messages) {
         
         // only remove sending label if there are no more drafts to send from this thread
         dt.refresh();
-        if ( dt.getMessages().none(function(m){return m.isDraft()}) ) {
+        if ( dt.getMessages().none(function(m){return m.isDraft() && m.getId() != d.getId()}) ) {
           dt.removeLabel(sendingL);
         }
       }
