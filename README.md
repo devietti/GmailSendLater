@@ -48,7 +48,7 @@ GmailSendLater requires several permissions to run. These should not be granted 
 
 * Allow this application to run when you are not present: allows emails to be sent at any time, whether you are logged in or not
 
-* Connect to an external service: needed to actually send the emails, which occurs via the [Gmail API](https://developers.google.com/gmail/api/v1/reference/users/drafts). Google Apps Script does not currently offer a clean way to send a draft (instead, the draft must be copied and the copy is sent) which results in issues with message threading, or a any way to discard drafts which results in drafts remaining in the message thread after sending. Thus, using this "external" web service is required.
+* Connect to an external service: needed to actually send the emails, which occurs via the [Gmail API](https://developers.google.com/gmail/api/v1/reference/users/drafts). Google Apps Script does not currently offer 1) a clean way to send a draft (instead, the draft must be copied and the copy is sent) which results in issues with message threading, or 2) any way to discard drafts (which results in drafts remaining in the message thread after sending). Thus, making calls to the Gmail API (which counts as an external web service) is required.
 
 ## Shout-outs
 
