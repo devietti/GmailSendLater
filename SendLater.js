@@ -1,6 +1,7 @@
 // DOCS
 // https://developers.google.com/apps-script/reference/gmail/
 // https://developers.google.com/gmail/api/v1/reference/users/drafts
+// http://stackoverflow.com/questions/17660601/create-draft-mail-using-google-apps-script
 // http://sugarjs.com/api/
 
 // GLOBAL CONSTANTS
