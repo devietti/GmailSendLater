@@ -3,13 +3,13 @@ Script](http://code.google.com/googleapps/appsscript/) that lets you send a Gmai
 
 ## Installation
 
-You can install GmailSendLater directly by [clicking here](https://script.google.com/macros/s/AKfycbxLEvLCZROFQcnFMTCtdi7g4-EzX76lnvwvpiEwva-STnEKA6Qi/exec) and granting the application the permissions it needs.
+You can install GmailSendLater directly by visiting the [installation page](https://script.google.com/macros/s/AKfycbxLEvLCZROFQcnFMTCtdi7g4-EzX76lnvwvpiEwva-STnEKA6Qi/exec) and granting the application the permissions it needs (see *Required Permissions*, below).
 
-If you want to customize the code for your installation, you can perform a manual installation (see below).
+If you want to customize the code for your installation, you can perform a *Manual Installation* (see below).
 
 ## Uninstalling
 
-Visit the application's [installation page](https://script.google.com/macros/s/AKfycbxLEvLCZROFQcnFMTCtdi7g4-EzX76lnvwvpiEwva-STnEKA6Qi/exec) and click the **uninstall** button.
+Visit GmailSendLater's [installation page](https://script.google.com/macros/s/AKfycbxLEvLCZROFQcnFMTCtdi7g4-EzX76lnvwvpiEwva-STnEKA6Qi/exec) and click the **uninstall** button.
 
 ## Usage
 
