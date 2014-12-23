@@ -3,18 +3,45 @@
 // "run unit tests" button. This will run the tests and display the results as a
 // fancy HTML page.
 
+var TEST_EMAIL_SUBJECT = "GmailSendLater-test-email";
+
+function createTestDraft() {
+  var raw = 
+      'Subject: '+TEST_EMAIL_SUBJECT+'\n' + 
+      'To: test@test.com\n' +
+      'Content-Type: multipart/alternative; boundary=1234567890123456789012345678\n' +
+      'GmailSendLater test message\n' + 
+      '--1234567890123456789012345678--\n';
+
+  var draftBody = Utilities.base64Encode(raw);
+
+  var params = {method:"post",
+                contentType: "application/json",
+                headers: {"Authorization": "Bearer " + ScriptApp.getOAuthToken()},
+                muteHttpExceptions:true,
+                payload:JSON.stringify({
+                  "message": {
+                    "raw": draftBody
+                  }
+                })
+               };
+  
+  var resp = UrlFetchApp.fetch("https://www.googleapis.com/gmail/v1/users/me/drafts", params);
+  if (resp.getResponseCode() != 200) {
+    throw resp;
+  }
+}
+
 function sendAtTests() {
   
   // setup for entire suite
   TESTING_MODE = true; // disables sending emails, deletion of sending_at labels
-  const TEST_EMAIL_SUBJECT = "GmailSendLater-test-email";
   
   // look for an existing test email
   var threads = GmailApp.search("subject:" + TEST_EMAIL_SUBJECT);
   if ( threads.length == 0 ) {
-    // send the test email to ourselves
-    GmailApp.sendEmail(Session.getActiveUser().getEmail(), TEST_EMAIL_SUBJECT, "");
-    Utilities.sleep(30 * 1000); // 30s
+    // create a draft email for us to test
+    createTestDraft();
   }
   threads = GmailApp.search("subject:" + TEST_EMAIL_SUBJECT);
   if ( threads.length == 0 ) {
