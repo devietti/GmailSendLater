@@ -1,5 +1,3 @@
-// version 1.0
-
 // DOCS
 // https://developers.google.com/apps-script/reference/gmail/
 // https://developers.google.com/gmail/api/v1/reference/users/drafts
@@ -20,6 +18,7 @@ function onInstall() {
   // create ERROR_LABEL label if it doesn't exist
   if ( null == GmailApp.getUserLabelByName(ERROR_LABEL) ) {
     GmailApp.createLabel(ERROR_LABEL);
+    Logger.log("created error label");
   }
 
   // add trigger if it doesn't exist
@@ -30,25 +29,52 @@ function onInstall() {
     .timeBased()
     .everyMinutes(TRIGGER_PERIOD_MINUTES)
     .create();
+    Logger.log("installed trigger");
   }
+  
+  persistLog_(Logger.getLog());
+  
+  // so that we are granted permissions for ScriptApp, used by code in install.html
+  var _ = ScriptApp.getService().getUrl();
 };
+
+function doGet(e) {
+  switch (e.parameter.action) {
+    case "log":
+      var logs = PropertiesService.getUserProperties().getProperty(LOG_KEY);
+      return ContentService.createTextOutput(logs);
+    case "unittest":
+      QUnit.helpers( this );
+      console = Logger;
+      QUnit.load( sendAtTests );
+      return QUnit.getHtml();
+    case "run":
+      sendLaterTrigger();
+      // NB: fallthrough to go back to the install page
+    default:
+      var myURL = ScriptApp.getService().getUrl();
+      var template = HtmlService.createTemplateFromFile('install');
+      template.TRIGGER_PERIOD_MINUTES = TRIGGER_PERIOD_MINUTES;
+      return template.evaluate();
+  }
+}
 
 /** log the message to a script property */
 function persistLog_(msg) {
   if ( msg == "" ) { return; }
   
-  var scriptProps = PropertiesService.getScriptProperties();
+  var scriptProps = PropertiesService.getUserProperties();
   var oldlog = scriptProps.getProperty(LOG_KEY);
   if ( oldlog == null ) {
     oldlog = "";
   }
   
-  var newlog = (JSON.stringify(msg) + oldlog).first(LOG_SIZE);
+  var newlog = (msg + oldlog).first(LOG_SIZE);
   scriptProps.setProperty(LOG_KEY, newlog);
 };
 
 function clearLog() {
-  PropertiesService.getScriptProperties().deleteProperty(LOG_KEY);
+  PropertiesService.getUserProperties().deleteProperty(LOG_KEY);
 };
 
 /** Used to easily disable the send later trigger during testing */
@@ -67,6 +93,8 @@ function sendLaterTrigger() {
   } catch(ex) { 
     Logger.log(ex);
   }
+  
+  persistLog_(Logger.getLog());
 };
 
 function sendLater(messages) {
@@ -163,8 +191,6 @@ function sendLater(messages) {
     Logger.log("deleting label: " + lab.getName());
     lab.deleteLabel();
   });
-  
-  persistLog_(Logger.getLog());
   
 };
 

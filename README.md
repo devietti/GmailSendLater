@@ -3,19 +3,13 @@ Script](http://code.google.com/googleapps/appsscript/) that lets you send a Gmai
 
 ## Installation
 
-GmailSendLater is installable via copy-and-paste: you copy the source code into a "Google Apps Script" program associated with your account.
+You can install the Google Apps Script directly by [clicking here](https://script.google.com/macros/s/AKfycbxLEvLCZROFQcnFMTCtdi7g4-EzX76lnvwvpiEwva-STnEKA6Qi/exec) and grant the application the permissions it needs.
 
-1. Follow the directions at https://developers.google.com/apps-script/guides/standalone to setup Google Apps Script for your account.
+If you want to customize the code for your installation, you can perform a manual installation (see below).
 
-2. Create script for a "Blank Project"
+## Uninstalling
 
-3. Copy and paste the source code for **SendLater.js** into the file **Code.gs**, and the code from **Sugar.js** into a new script file **Sugar.gs**. The names of the .gs files don't actually matter. Don't worry about **tests.js** unless you want to run the unit tests.
-
-4. Next setup the script to run periodically in the background. From the **Run** menu, click **onInstall** to run the installation code. This will prompt you to grant the permissions that GmailSendLater needs. For an explanation of the relevant permissions, see **Required Permissions** below.
-
-5. Next you'll enable access to the Gmail API. From the **Resources** menu, click **Advanced Google services...** and then at the bottom of the dialog box the link for the **Google Developers Console**, find the **Gmail API** entry and turn it **On**.
-
-6. Now, send yourself a test email via the **Usage** instructions below. By default GmailDelaySend sends emails every 15 minutes. To cause emails to be sent sooner, you can manually trigger sending via the **Run** menu by selecting the **sendLaterTrigger** entry.
+Visit the application's [installation page](https://script.google.com/macros/s/AKfycbxLEvLCZROFQcnFMTCtdi7g4-EzX76lnvwvpiEwva-STnEKA6Qi/exec) and click the **uninstall** button.
 
 ## Usage
 
@@ -40,7 +34,7 @@ Known limitations:
 
 ## Required Permissions
 
-GmailSendLater requires several permissions to run. These should not be granted lightly - this is your email account after all! Here's an explanation of what each permission is needed for.
+GmailSendLater requires several permissions to run. These should not be granted lightly - this is your email account after all! Here's an explanation of why each permission is needed.
 
 * View and manage your mail: used to find the drafts to send and to manipulate their labels
 
@@ -48,7 +42,24 @@ GmailSendLater requires several permissions to run. These should not be granted 
 
 * Allow this application to run when you are not present: allows emails to be sent at any time, whether you are logged in or not
 
-* Connect to an external service: needed to actually send the emails, which occurs via the [Gmail API](https://developers.google.com/gmail/api/v1/reference/users/drafts). Google Apps Script does not currently offer 1) a clean way to send a draft (instead, the draft must be copied and the copy is sent) which results in issues with message threading, or 2) any way to discard drafts (which results in drafts remaining in the message thread after sending). Thus, making calls to the Gmail API (which counts as an external web service) is required.
+* Connect to an external service: needed to actually send the emails, which occurs via the [Gmail API](https://developers.google.com/gmail/api/v1/reference/users/drafts). Google Apps Script does not currently offer 1) a clean way to send a draft (instead, the draft must be copied and the copy sent) which results in issues with message threading, or 2) any way to discard drafts (which results in drafts remaining in the message thread after sending). Thus, making calls to the Gmail API (which counts as an external web service) is required.
+
+
+## Manual Installation
+
+You'll copy the source code for GmailSendLater into a "Google Apps Script" program associated with your account.
+
+1. Follow the directions at https://developers.google.com/apps-script/guides/standalone to setup Google Apps Script for your account.
+
+2. Create script for a "Blank Project"
+
+3. Copy and paste the source code for the .js files into equivalent .gs script files in your project. The names of the .gs files don't actually matter, though the file **install.html** must be named as such. Don't worry about **tests.js** unless you want to run the unit tests.
+
+4. Next setup the script to run periodically in the background. From the **Run** menu, click **onInstall** to run the installation code. This will prompt you to grant the permissions that GmailSendLater needs. For an explanation of the relevant permissions, see **Required Permissions** below.
+
+5. Next you'll enable access to the Gmail API. From the **Resources** menu, click **Advanced Google services...** and then at the bottom of the dialog box the link for the **Google Developers Console**, find the **Gmail API** entry and turn it **On**.
+
+6. Now, send yourself a test email via the **Usage** instructions below. By default GmailDelaySend sends emails every 15 minutes. To cause emails to be sent sooner, you can manually trigger sending via the **Run** menu by selecting the **sendLaterTrigger** entry.
 
 ## Shout-outs
 

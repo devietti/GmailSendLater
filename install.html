@@ -1,0 +1,46 @@
+<?
+var myURL = ScriptApp.getService().getUrl();
+var runURL = myURL + "?action=run";
+var uninstallURL = myURL.substring(0,myURL.lastIndexOf("/")) + "/manage/uninstall";
+var logURL = myURL + "?action=log";
+var unittestURL = myURL + "?action=unittest";
+?>
+    
+<html>
+
+<head>
+  <title>GmailSendLater installation page</title>
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+</head>
+
+<body>
+<div class="container">
+  <div class="row">
+  <div class="col-md-1"></div>
+  <div class="col-md-6">
+
+  <h2>Thanks for installing GmailSendLater!</h2>
+  <p>GmailSendLater is installed and running in the background.
+  It checks for email to send every <?= TRIGGER_PERIOD_MINUTES ?> minutes or so.
+  For information on using GmailSendLater, check out <a href="https://github.com/devietti/GmailSendLater">the Readme file</a>.</p>
+
+  <p><a class="btn btn-default" href="<?= runURL ?>">check for email to send</a>
+  Run GmailSendLater right now, so that you can verify that it works.</p>
+
+  <p><a class="btn btn-warning" href="<?= uninstallURL ?>">uninstall</a>
+  Uninstall GmailSendLater.</p>
+    
+  <p><a class="btn btn-default" href="<?= logURL ?>">view logs</a>
+  View the GmailSendLater internal logs, useful for debugging purposes.</p>
+    
+  <p><mark>Developers only:</mark> <a class="btn btn-default" href="<?= unittestURL ?>">run unit tests</a>
+  Note that the tests take about 5 minutes to run.</p>
+  
+  </div>
+  <div class="col-md-5"></div>
+  </div>
+</div>
+
+</body>
+
+</html>
