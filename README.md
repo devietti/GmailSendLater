@@ -36,6 +36,7 @@ Features:
 
 Known limitations:
 * If there are multiple drafts per thread, they will all be sent at the same time via GmailSendLater (since labels are per-thread, not per-message).
+* If a draft is sent manually and then sending is [undone](https://support.google.com/mail/answer/1284885?hl=en), GmailSendLater will not be able to send this draft subsequently. I believe this is because, on undo, a draft is re-created with a new draft ID but the list of drafts accessible via the Gmail API is not updated with the new ID. Thus, the re-created draft is not reachable via the API so GmailSendLater cannot send it.
 
 ## Required Permissions
 
