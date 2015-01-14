@@ -135,7 +135,7 @@ function sendLater(messages) {
         Logger.log("called future(), new sendtime is : " + sendtime);
       }
 
-      // TODO: use user/script tz? via Session.getActiveUserTimeZone() or Session.getScriptTimeZone()
+      // TODO: use user tz via Session.getActiveUserTimeZone()?
       // tz is of the form America/New_York which would require parsing via a dedicated tz library
       
       // use the timezone *from the draft*, not the Google datacenter's timezone
@@ -217,7 +217,7 @@ function getDraftId(d) {
   if (resp.getResponseCode() != 200) {
     throw resp;
   }
-  //Logger.log(resp.getContentText());
+  Logger.log(resp.getContentText());
   var drafts = JSON.parse(resp.getContentText()).drafts;
   
   for (var i = 0; i < drafts.length; i++) {
@@ -227,7 +227,7 @@ function getDraftId(d) {
     }
   }
   
-  throw ("No draft found with message id " + d.getId());
+  throw ("No draft found with message id " + d.getId() + " all drafts:" + drafts);
 }
 
 /** Sends the draft GmailMessage d */
@@ -242,9 +242,9 @@ function sendDraft(d) {
   Logger.log( "trying to send draft: " + JSON.stringify(params) );
   
   var resp = UrlFetchApp.fetch("https://www.googleapis.com/gmail/v1/users/me/drafts/send", params);
-  Logger.log(resp.getContentText());
   
   if (resp.getResponseCode() != 200) {
-    throw resp;
+    Logger.log("response code => " + resp.getResponseCode());
   }
+  Logger.log(resp.getContentText());
 }
